@@ -1,0 +1,8 @@
+memo
+
+models > fine_tuned > checkpoint_xxに随時保存されていく. >>>> 次回以降、ここを参照してロード。途中から学習再開
+学習後は latestに保存 >>>> 学習再開時には影響なし
+
+resultフォルダは？
+
+50epochで5分程度

@@ -4,8 +4,8 @@ import csv
 
 # 処理対象のフォルダと出力ファイル
 folder_path = "20250712"
-input_folder = os.path.join("/Users/kotsukansuke/Documents/GitHub/kiwami-AI/datasets", folder_path)
-output_data = os.path.join(input_folder, "output.csv")
+input_folder = os.path.join("/home/sagemaker-user/kiwami-AI-AWS/datasets", folder_path)
+output_data = os.path.join("output.csv")
 
 # 台本文字数の閾値
 SCRIPT_LENGTH_THRESHOLD = 800
@@ -20,7 +20,8 @@ with open(output_data, mode, encoding='utf-8', newline='') as f_out:
     writer = csv.writer(f_out)
     # ファイル作成時のみヘッダーを書き込む
     #if write_header:
-    writer.writerow(['商材名', '累計再生回数', '公開日', '台本'])
+    #writer.writerow(['商材名', '累計再生回数', '公開日', '台本'])
+    writer.writerow(['text', 'score'])
 
     # フォルダ内の .csv ファイルをすべて取得
     pattern = os.path.join(input_folder, "*.csv")
@@ -33,9 +34,11 @@ with open(output_data, mode, encoding='utf-8', newline='') as f_out:
                 script = row.get('台本', "")
                 if len(script) > SCRIPT_LENGTH_THRESHOLD:
                     ad_name = row.get('商材名', '')
-                    ad_view = row.get('累計再生回数', '')
+                    ad_view_str = row.get('累計再生回数', '0').replace(',', '').strip()
+                    ad_view = int(ad_view_str)  # ここで変換
                     ad_date = row.get('公開日', '')
-                    writer.writerow([ad_name, ad_view, ad_date, script])
+                    #writer.writerow([ad_name, ad_view, ad_date, script])
+                    writer.writerow([script, ad_view])
                     total_count += 1
 
 print(f"{total_count} 件のデータが見つかりました。")
