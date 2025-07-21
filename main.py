@@ -57,7 +57,7 @@ model = training_my_model(
     TRAIN_DATA=train_dataset,
     EVAL_DATA=eval_dataset,
     output_dir=FINE_TUNE_DIR,
-    num_epochs=10
+    num_epochs=100
 )
 
 # 最新モデルを 'latest' フォルダに保存（上書き）

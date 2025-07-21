@@ -17,7 +17,19 @@ def collate_fn(batch):
             }
 
 
-def training_my_model(MODEL, TOKENIZER, TRAIN_DATA, EVAL_DATA, output_dir, num_epochs=5):
+def training_my_model(
+    MODEL,
+    TOKENIZER,
+    TRAIN_DATA,
+    EVAL_DATA,
+    output_dir,
+    num_epochs=5,
+    batch_size=2,
+    learning_rate=2e-5,
+    warmup_ratio=0.1,
+    max_grad_norm=1.0,
+    fp16=True,
+):
     # 変数セット
     model = MODEL
     tokenizer = TOKENIZER
@@ -27,21 +39,44 @@ def training_my_model(MODEL, TOKENIZER, TRAIN_DATA, EVAL_DATA, output_dir, num_e
     # 出力ディレクトリ準備
     os.makedirs(output_dir, exist_ok=True)
 
+    # Compute total training steps to set warmup
+    total_steps = (
+        len(train_dataset) // (batch_size) * num_epochs
+    )
+    warmup_steps = int(total_steps * warmup_ratio)
+
     # TrainingArguments にチェックポイント保存設定を追加
+    # Define training arguments with checkpointing, scheduling, and mixed precision
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=num_epochs,
-        per_device_train_batch_size=2,
-        learning_rate=2e-5,
-        eval_strategy="epoch",
+        per_device_train_batch_size=batch_size,
+        per_device_eval_batch_size=batch_size,
+        learning_rate=learning_rate,
         #evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         save_total_limit=3,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
+        warmup_steps=warmup_steps,
         logging_strategy="steps",
         logging_steps=100,
+        fp16=fp16,
+        max_grad_norm=max_grad_norm,
+        report_to=["tensorboard"],
     )
 
     data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=None)
+
+    # Define compute_metrics for regression (or customize for classification)
+    def compute_metrics(eval_pred):
+        predictions, labels = eval_pred
+        # If regression: return MSE and RMSE
+        mse = ((predictions - labels) ** 2).mean()
+        rmse = np.sqrt(mse)
+        return {"mse": mse, "rmse": rmse}
 
     trainer = Trainer(
         model=model,
